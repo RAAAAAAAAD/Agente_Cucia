@@ -5,40 +5,60 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-st.set_page_config(page_title="AI Kitchen Agent", layout="wide")
+st.set_page_config(page_title="Chef Agent Pro", layout="wide")
 
 if "agent" not in st.session_state:
     st.session_state.agent = RecipeAgent()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# SIDEBAR
+# --- SIDEBAR: PROGRESSO CONOSCENZA ---
 with st.sidebar:
-    st.header("📋 Inventario Real-Time")
-    for ing in st.session_state.agent.state.ingredienti:
-        with st.container(border=True):
-            st.markdown(f"**{ing.nome.upper()}**")
-            st.write(f"Quantità: {ing.quantita}")
-            if "Scaduto" in ing.info_scadenza:
-                st.error(ing.info_scadenza)
-            elif "Scade oggi" in ing.info_scadenza or "1 giorni" in ing.info_scadenza:
-                st.warning(ing.info_scadenza)
-            else:
-                st.success(ing.info_scadenza)
+    st.title("👤 Profilo & Dispensa")
+    state = st.session_state.agent.state
+    
+    # Sezione Allergie (Evidenziata)
+    if not state.profilo.allergie:
+        st.error("⚠️ Allergie non specificate")
+    else:
+        st.success(f"🛡️ Allergie: {', '.join(state.profilo.allergie)}")
 
-# CHAT
-st.title("👨‍🍳 AI Chef: Ricette dalle tue scadenze")
+    # Sezione Esperienza e Persone
+    col1, col2 = st.columns(2)
+    col1.metric("Persone", state.numero_persone)
+    col2.metric("Livello", state.profilo.esperienza)
+
+    st.divider()
+    
+    # Inventario
+    st.subheader("🛒 Ingredienti Rilevati")
+    for ing in state.ingredienti:
+        with st.expander(f"{ing.nome.upper()}"):
+            st.write(f"Q.tà: {ing.quantita}")
+            if "Scaduto" in ing.info_scadenza: st.error(ing.info_scadenza)
+            else: st.info(ing.info_scadenza)
+
+    st.divider()
+    st.subheader("🎨 Gusti e Occasione")
+    st.write(f"**Occasione:** {state.profilo.occasione}")
+    st.write(f"**Cucina:** {state.profilo.stile_cucina}")
+    if state.profilo.gusti_odio:
+        st.write(f"**Odia:** {', '.join(state.profilo.gusti_odio)}")
+
+# --- CHAT ---
+st.title("👨‍🍳 AI Chef Agent: Conversazione Gourmet")
 
 for msg in st.session_state.messages:
-    with st.chat_message("user" if isinstance(msg, HumanMessage) else "assistant"):
+    role = "user" if isinstance(msg, HumanMessage) else "assistant"
+    with st.chat_message(role):
         st.markdown(msg.content)
 
-if prompt := st.chat_input("Es: Ho 500g di carne scaduta da 1 giorno e 2 uova..."):
+if prompt := st.chat_input("Es: Sono un principiante, siamo in 2, nessuna allergia. Ho del salmone..."):
     st.session_state.messages.append(HumanMessage(content=prompt))
     st.chat_message("user").markdown(prompt)
     
     with st.chat_message("assistant"):
-        with st.spinner("Cercando video e link ufficiali..."):
+        with st.spinner("Lo Chef sta analizzando il tuo profilo..."):
             res = st.session_state.agent.get_response(prompt, st.session_state.messages[:-1])
             st.markdown(res)
             st.session_state.messages.append(AIMessage(content=res))
