@@ -1,0 +1,22 @@
+# --- Credenziali e Segreti ---
+.env
+.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# --- Streamlit ---
+.streamlit/
+
+# --- Sistema Operativo ---
+.DS_Store
+Thumbs.db
+
+# --- Altro ---
+*.log
